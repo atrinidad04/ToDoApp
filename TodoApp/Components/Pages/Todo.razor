@@ -1,0 +1,198 @@
+@page "/todo"
+@using BlazorTodoApp.Models
+@using BlazorTodoApp.Services
+@inject TodoService TodoService
+@rendermode InteractiveServer
+
+<PageTitle>Lista de Tareas</PageTitle>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h3 class="mb-4">Lista de Tareas</h3>
+
+            <!-- Agregar Nueva Tarea -->
+            <div class="border p-3 mb-4">
+                <h6 class="mb-3">Agregar tarea</h6>
+                <div class="mb-2">
+                    <input type="text" 
+                           class="form-control" 
+                           placeholder="Título" 
+                           @bind="newTaskTitle"
+                           @bind:event="oninput"
+                           @onkeypress="HandleKeyPress" />
+                </div>
+                <div class="mb-2">
+                    <input type="text" 
+                           class="form-control" 
+                           placeholder="Descripción (opcional)" 
+                           @bind="newTaskDescription"
+                           @bind:event="oninput" />
+                </div>
+                <button class="btn btn-primary btn-sm" 
+                        @onclick="AddNewTask"
+                        disabled="@string.IsNullOrWhiteSpace(newTaskTitle)">
+                    Agregar
+                </button>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="mb-3">
+                <span class="me-3">Csntidad de Todos: @todos.Count</span>
+                <span class="me-3">Completadas: @completedCount</span>
+                <span>Pendientes: @pendingCount</span>
+            </div>
+
+            <!-- Lista de Tareas -->
+            @if (!todos.Any())
+            {
+                <p class="text-muted">No hay tareas</p>
+            }
+            else
+            {
+                <div>
+                    @foreach (var task in todos)
+                    {
+                        <div class="border-bottom py-3">
+                            @if (editingTaskId == task.Id)
+                            {
+                                <!-- Modo Edición -->
+                                <div class="mb-2">
+                                    <input type="text" 
+                                           class="form-control form-control-sm mb-2"
+                                           @bind="editTaskTitle" 
+                                           @bind:event="oninput" />
+                                    <input type="text" 
+                                           class="form-control form-control-sm"
+                                           @bind="editTaskDescription" 
+                                           @bind:event="oninput" />
+                                </div>
+                                <button class="btn btn-success btn-sm me-2" 
+                                        @onclick="SaveEdit"
+                                        disabled="@string.IsNullOrWhiteSpace(editTaskTitle)">
+                                    Guardar
+                                </button>
+                                <button class="btn btn-secondary btn-sm" 
+                                        @onclick="CancelEdit">
+                                    Cancelar
+                                </button>
+                            }
+                            else
+                            {
+                                <!-- Modo Visualización -->
+                                <div class="d-flex align-items-start">
+                                    <input class="form-check-input me-3 mt-1" 
+                                           type="checkbox" 
+                                           checked="@task.IsCompleted"
+                                           @onchange="() => ToggleTaskCompletion(task.Id)">
+                                    
+                                    <div class="flex-grow-1">
+                                        <div class="@(task.IsCompleted ? "text-decoration-line-through text-muted" : "")">
+                                            <strong>@task.Title</strong>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(task.Description))
+                                        {
+                                            <div class="text-muted small @(task.IsCompleted ? "text-decoration-line-through" : "")">
+                                                @task.Description
+                                            </div>
+                                        }
+                                        <div class="text-muted small">
+                                            @task.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <button class="btn btn-sm btn-link" 
+                                                @onclick="() => StartEdit(task)">
+                                            Editar
+                                        </button>
+                                        <button class="btn btn-sm btn-link text-danger" 
+                                                @onclick="() => DeleteTask(task.Id)">
+                                            Eliminar
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private string newTaskTitle = string.Empty;
+    private string newTaskDescription = string.Empty;
+    private int? editingTaskId = null;
+    private string editTaskTitle = string.Empty;
+    private string editTaskDescription = string.Empty;
+    private List<TodoTask> todos = new();
+    private int completedCount => todos.Count(t => t.IsCompleted);
+    private int pendingCount => todos.Count(t => !t.IsCompleted);
+
+    protected override void OnInitialized()
+    {
+        RefreshTodoList();
+    }
+
+    private void RefreshTodoList()
+    {
+        todos = TodoService.GetAllTodos();
+    }
+
+    private void AddNewTask()
+    {
+        if (string.IsNullOrWhiteSpace(newTaskTitle))
+            return;
+
+        TodoService.AddTodo(newTaskTitle, newTaskDescription);
+        newTaskTitle = string.Empty;
+        newTaskDescription = string.Empty;
+        RefreshTodoList();
+    }
+
+    private void HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(newTaskTitle))
+        {
+            AddNewTask();
+        }
+    }
+
+    private void ToggleTaskCompletion(int taskId)
+    {
+        TodoService.ToggleTodo(taskId);
+        RefreshTodoList();
+    }
+
+    private void DeleteTask(int taskId)
+    {
+        TodoService.DeleteTodo(taskId);
+        RefreshTodoList();
+    }
+
+    private void StartEdit(TodoTask task)
+    {
+        editingTaskId = task.Id;
+        editTaskTitle = task.Title;
+        editTaskDescription = task.Description ?? string.Empty;
+    }
+
+    private void SaveEdit()
+    {
+        if (editingTaskId.HasValue && !string.IsNullOrWhiteSpace(editTaskTitle))
+        {
+            TodoService.UpdateTodo(editingTaskId.Value, editTaskTitle, editTaskDescription);
+            editingTaskId = null;
+            RefreshTodoList();
+        }
+    }
+
+    private void CancelEdit()
+    {
+        editingTaskId = null;
+        editTaskTitle = string.Empty;
+        editTaskDescription = string.Empty;
+    }
+}
