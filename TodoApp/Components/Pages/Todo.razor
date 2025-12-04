@@ -1,6 +1,6 @@
 @page "/todo"
-@using BlazorTodoApp.Models
-@using BlazorTodoApp.Services
+@using TodoApp.Models
+@using TodoApp.Services
 @inject TodoService TodoService
 @rendermode InteractiveServer
 
@@ -38,7 +38,7 @@
 
             <!-- Estadísticas -->
             <div class="mb-3">
-                <span class="me-3">Csntidad de Todos: @todos.Count</span>
+                <span class="me-3">Cantidad de Todos: @todos.Count</span>
                 <span class="me-3">Completadas: @completedCount</span>
                 <span>Pendientes: @pendingCount</span>
             </div>
@@ -97,8 +97,14 @@
                                             </div>
                                         }
                                         <div class="text-muted small">
-                                            @task.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                            Creada: @task.CreatedAtFormatted
                                         </div>
+                                        @if (task.IsCompleted && task.CompletedAt.HasValue)
+                                        {
+                                            <div class="text-success small">
+                                                Completada: @task.CompletedAtFormatted
+                                            </div>
+                                        }
                                     </div>
 
                                     <div>
@@ -195,4 +201,6 @@
         editTaskTitle = string.Empty;
         editTaskDescription = string.Empty;
     }
+
+
 }
