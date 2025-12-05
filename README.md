@@ -1,6 +1,6 @@
-Ejecutar Script SQL para crear la db, sp, function e insertar valores mock antes de correr la app:
+Copia este script y ejecutalo en sql server managment studio antes de correr la app.
 
--- 1. CREAR BASE DE DATOS
+```sql
 USE master;
 GO
 
@@ -17,7 +17,6 @@ GO
 USE TodoAppDB;
 GO
 
--- 2. CREAR TABLA Tasks
 CREATE TABLE Tasks (
     Id INT PRIMARY KEY IDENTITY(1,1),
     Title NVARCHAR(200) NOT NULL,
@@ -28,7 +27,6 @@ CREATE TABLE Tasks (
 );
 GO
 
--- 3. INSERTAR DATOS MOCK
 INSERT INTO Tasks (Title, Description, IsCompleted, CreatedAt, CompletedAt)
 VALUES
 ('Título de tarea #1', 'Descripción #1', 0, GETDATE(), NULL),
@@ -37,7 +35,6 @@ VALUES
 ('Título de tarea #4', 'Descripción #4', 0, GETDATE(), NULL);
 GO
 
--- 4.1 SP - Obtener todas las tareas
 CREATE PROCEDURE sp_GetAllTasks
 AS
 BEGIN
@@ -59,7 +56,6 @@ BEGIN
 END
 GO
 
--- 4.2 SP - Obtener tarea por ID
 CREATE PROCEDURE sp_GetTaskById
     @Id INT
 AS
@@ -78,7 +74,6 @@ BEGIN
 END
 GO
 
--- 4.3 SP - Insertar nueva tarea
 CREATE PROCEDURE sp_InsertTask
     @Title NVARCHAR(200),
     @Description NVARCHAR(1000) = NULL,
@@ -104,7 +99,6 @@ BEGIN
 END
 GO
 
--- 4.4 SP - Actualizar tarea
 CREATE PROCEDURE sp_UpdateTask
     @Id INT,
     @Title NVARCHAR(200),
@@ -134,7 +128,6 @@ BEGIN
 END
 GO
 
--- 4.5 SP - Marcar tarea como completada/pendiente
 CREATE PROCEDURE sp_ToggleTaskCompletion
     @Id INT
 AS
@@ -162,7 +155,6 @@ BEGIN
 END
 GO
 
--- 4.6 SP - Eliminar tarea
 CREATE PROCEDURE sp_DeleteTask
     @Id INT
 AS
@@ -176,7 +168,6 @@ BEGIN
 END
 GO
 
--- 5.1 Función - Contar tareas pendientes
 CREATE FUNCTION fn_GetPendingTasksCount()
 RETURNS INT
 AS
@@ -191,7 +182,6 @@ BEGIN
 END
 GO
 
--- 5.2 Función - Contar tareas completadas
 CREATE FUNCTION fn_GetCompletedTasksCount()
 RETURNS INT
 AS
@@ -206,7 +196,6 @@ BEGIN
 END
 GO
 
--- 5.3 Función - Formatear fecha a formato largo
 CREATE FUNCTION fn_FormatDateToLongFormat
 (
     @Date DATETIME
@@ -226,7 +215,6 @@ BEGIN
     DECLARE @Year INT = YEAR(@Date);
     DECLARE @MonthName NVARCHAR(20);
     
-    -- Obtener el nombre del mes en español
     SET @MonthName = CASE @Month
         WHEN 1 THEN 'enero'
         WHEN 2 THEN 'febrero'
@@ -242,10 +230,9 @@ BEGIN
         WHEN 12 THEN 'diciembre'
     END;
     
-    -- Formato: "15 de enero de 2026"
     SET @FormattedDate = CAST(@Day AS NVARCHAR(2)) + ' de ' + @MonthName + ' de ' + CAST(@Year AS NVARCHAR(4));
     
     RETURN @FormattedDate;
 END
 GO
-
+```
